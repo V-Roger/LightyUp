@@ -1,6 +1,8 @@
 import React from 'react'
 import Loader from 'react-loader-spinner'
 import logo from './assets/img/logo_lighty.png'
+import INSTRUCTIONS from './instructions'
+
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -8,6 +10,7 @@ class App extends React.Component {
       connecting: false,
       connected: false ,
       mode: 42,
+      currentInstruction: undefined,
     }
     this.device = undefined
     this.server = undefined
@@ -39,9 +42,6 @@ class App extends React.Component {
       this.service = await this.server.getPrimaryService(0xFFE0);
       this.characteristic = await this.service.getCharacteristic(0xFFE1);
 
-      await this.characteristic.writeValue(
-        new Uint8Array([0x38, 0, 0, 0, 0xaa]) 
-      )
       this.setState({
         connecting: false,
         connected: true,
@@ -62,7 +62,7 @@ class App extends React.Component {
       return;
     }
     await this.characteristic.writeValue(
-      new Uint8Array([0x38, this.state.mode, 0x00, 0x00, 0x2c])
+      INSTRUCTIONS.SET_MODE(this.state.mode)
     )
   }
 
@@ -72,7 +72,7 @@ class App extends React.Component {
       return;
     }
     await this.characteristic.writeValue(
-      new Uint8Array([0x38, 0, 0, 0, 0xaa])
+      INSTRUCTIONS.TOGGLE_POWER
     )
   }
 
@@ -81,53 +81,47 @@ class App extends React.Component {
       console.error('nc')
       return;
     }
-    const colorInstruction = color === 'blue' ? new Uint8Array([0x38, 0, 0, 0, 0x36]) : new Uint8Array([0x38, 0, 0, 0, 0x12])
     await this.characteristic.writeValue(
-      colorInstruction
-      // new Uint8Array([0x38, 0, 0, 0, 0xaa])                         // 0   0   0   170
-      // new Uint8Array([0x38, 0x2A, 0x00, 0x00, 0x2c])  // MODE         56  {n°mode} 0 0   44
-      // new Uint8Array([0x38, 0, 0, 0, 0x12])  // GREEN         56 177 204 111 213
-      // new Uint8Array([0x38, 0, 0, 0, 0x36]) // BLUE           194 5   77  54
-      // new Uint8Array([0x38, 0, 0, 0, 0x04]) // BLUE           194 5   77  54
+      INSTRUCTIONS[color]
     );
-    console.log('changed')
   }
 
   render() {
     return (
-      <div className="bg-gray-900 w-screen h-screen">
-        <header className="relative z-40 h-1/4 container py-5 mx-auto flex flex-row justify-center align-center shadow-lg">
+      <div className="bg-lighty-yellow w-screen h-screen p-4">
+        <header className="bg-gray-900 relative z-40 h-1/4 container py-5 mx-auto flex flex-row justify-center align-center shadow-lg rounded-xl">
           <img src={logo} className="h-full" alt="logo" />
+          {
+            this.state.connected &&
+            <button className="absolute -bottom-8 right-4 bg-red-600 ring-4 ring-white rounded-full text-white shadow-sm p-4 px-8 transition-all shadow-lg" onClick={() => this.togglePowerState()}>
+              ⚡
+            </button>
+          }
         </header>
-        <main className="z-0 relative h-3/4 w-90 bg-lighty-yellow flex flex-col content-between justify-center p-10">
+        <main className="z-0 h-3/4 w-90 bg-lighty-yellow flex flex-col content-between justify-center p-4">
           {
             this.state.error && 
-            <h2 className="absolute z-50 top-1/4 right-4 left-4 mt-4 p-4 text-white shadow-sm bg-lighty-blue rounded">
+            <h2 className="fixed z-50 top-0 ring-4 ring-white right-4 left-4 mt-4 p-4 text-white shadow-sm bg-lighty-blue rounded">
               { this.state.error.toString() }
             </h2>
           }
           {
             this.state.connected &&
-            <div className="">
-              <div>
-                <button className="absolute -top-8 right-4 bg-red-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all" onClick={() => this.togglePowerState()}>
-                  ON / OFF
-                </button>
+            <div className="w-full flex-grow flex flex-col justify-evenly">
+              <div className="w-full flex flex-row content-center justify-between">
+                <button className="bg-indigo-600 focus:outline-none	ring-4 ring-white rounded-full text-white shadow-lg p-4 px-6 transition-all" onClick={() => this.changeColor('BLUE')}>BLEU</button>
+                <button className="bg-green-500 focus:outline-none ring-4 ring-white rounded-full text-white shadow-lg p-4 px-6 transition-all" onClick={() => this.changeColor('GREEN')}>VERT</button>
+                <button className="bg-red-600 focus:outline-none ring-4 ring-white rounded-full text-white shadow-lg p-4 px-6 transition-all" onClick={() => this.changeColor('RED')}>ROUGE</button>
               </div>
-              <div className="flex flex-row content-center justify-center">
-                <input value={this.state.mode} onChange={this.handleModeChange} className="bg-gray-900 border-white border-2 rounded-lg rounded-r-none text-white shadow-sm p-4 transition-all" type="number"/>
-                <button className="bg-gray-900 border-white border-2 rounded-lg rounded-l-none text-white shadow-sm p-4 transition-all" onClick={() => this.setColorMode()}>Mode</button>
-              </div>
-              <div className="flex flex-row content-center justify-between">
-                <button className="bg-indigo-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('blue')}>BLEU</button>
-                <button className="bg-green-500 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('green')}>VERT</button>
-                <button className="bg-red-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('red')}>ROUGE</button>
+              <div className="w-full flex flex-row content-center justify-center mt-5">
+                <input value={this.state.mode} onChange={this.handleModeChange} className="w-full bg-gray-900 ring-4 ring-white rounded-lg rounded-r-none text-white shadow-sm p-4 transition-all" type="number"/>
+                <button className="bg-gray-900 ring-4 ring-white rounded-lg rounded-l-none text-white shadow-lg p-4 transition-all" onClick={() => this.setColorMode()}>✨</button>
               </div>
             </div>
           }
           {
             !this.state.connected && 
-            <button className="bg-gray-900 border-white border-2 w-min mx-auto rounded-full text-white shadow-sm p-8 transition-all text-xl focus:outline-none hover:shadow-xl" onClick={() => this.requestBLEConnection()}>
+            <button className="bg-gray-900 focus:outline-none ring-4 ring-white w-min mx-auto rounded-full text-white shadow-sm p-8 transition-all text-xl focus:outline-none hover:shadow-xl" onClick={() => this.requestBLEConnection()}>
               {
                 this.state.connecting &&
                 <Loader type="Rings" color="#ffeb0a" height={80} width={80} />
