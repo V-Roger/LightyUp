@@ -5,6 +5,12 @@ module.exports = {
   presets: [],
   darkMode: false, // or 'media' or 'class'
   theme: {
+    extend: {
+      colors: {
+        'lighty-blue': '#1017cb',
+        'lighty-yellow': '#ffeb0a',
+      },
+    },
     screens: {
       sm: '640px',
       md: '768px',

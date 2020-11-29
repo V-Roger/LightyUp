@@ -27,23 +27,33 @@ class App extends React.Component {
     this.setState({
       connecting: true,
     })
-    this.device = await navigator.bluetooth.requestDevice({
-        filters: [
-            { name: 'SP105E' }
-        ],
-        optionalServices: [0xFFE0],
-    });
-  
-    this.server = await this.device.gatt.connect();
-    this.service = await this.server.getPrimaryService(0xFFE0);
-    this.characteristic = await this.service.getCharacteristic(0xFFE1);
-    await this.characteristic.writeValue(
-      new Uint8Array([0x38, 0, 0, 0, 0xaa]) 
-    )
-    this.setState({
-      connecting: false,
-      connected: true,
-    })
+    try {
+      this.device = await navigator.bluetooth.requestDevice({
+          filters: [
+              { name: 'SP105E' }
+          ],
+          optionalServices: [0xFFE0],
+      });
+    
+      this.server = await this.device.gatt.connect();
+      this.service = await this.server.getPrimaryService(0xFFE0);
+      this.characteristic = await this.service.getCharacteristic(0xFFE1);
+
+      await this.characteristic.writeValue(
+        new Uint8Array([0x38, 0, 0, 0, 0xaa]) 
+      )
+      this.setState({
+        connecting: false,
+        connected: true,
+        error: undefined,
+      })
+    } catch (error) {
+      this.setState({
+        error,
+        connecting: false,
+        connected: false,
+      })
+    }
   }
 
   async setColorMode() {
@@ -62,7 +72,7 @@ class App extends React.Component {
       return;
     }
     await this.characteristic.writeValue(
-      new Uint8Array([0x38, 0, 0, 0, 0xaa]) 
+      new Uint8Array([0x38, 0, 0, 0, 0xaa])
     )
   }
 
@@ -86,26 +96,32 @@ class App extends React.Component {
   render() {
     return (
       <div className="bg-gray-900 w-screen h-screen">
-        <header className="h-1/4 container py-5 mx-auto flex flex-row justify-center align-center shadow-lg">
+        <header className="relative z-40 h-1/4 container py-5 mx-auto flex flex-row justify-center align-center shadow-lg">
           <img src={logo} className="h-full" alt="logo" />
         </header>
-        <main className="relative h-3/4 w-90 bg-yellow-400 flex flex-col content-center justify-center p-10">
+        <main className="z-0 relative h-3/4 w-90 bg-lighty-yellow flex flex-col content-between justify-center p-10">
+          {
+            this.state.error && 
+            <h2 className="absolute z-50 top-1/4 right-4 left-4 mt-4 p-4 text-white shadow-sm bg-lighty-blue rounded">
+              { this.state.error.toString() }
+            </h2>
+          }
           {
             this.state.connected &&
-            <div>
-              <div className="">
+            <div className="">
+              <div>
                 <button className="absolute -top-8 right-4 bg-red-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all" onClick={() => this.togglePowerState()}>
-                  OFF
+                  ON / OFF
                 </button>
               </div>
               <div className="flex flex-row content-center justify-center">
-                <input value={this.state.mode} onChange={this.handleModeChange} className="bg-gray-900 border-white border-2 rounded-lg rounded-r-none text-white shadow-sm p-4 transition-all" type="text"/>
+                <input value={this.state.mode} onChange={this.handleModeChange} className="bg-gray-900 border-white border-2 rounded-lg rounded-r-none text-white shadow-sm p-4 transition-all" type="number"/>
                 <button className="bg-gray-900 border-white border-2 rounded-lg rounded-l-none text-white shadow-sm p-4 transition-all" onClick={() => this.setColorMode()}>Mode</button>
               </div>
               <div className="flex flex-row content-center justify-between">
-                <button className="bg-indigo-600 border-white border-2 rounded-lg text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('blue')}>BLEU</button>
-                <button className="bg-green-500 border-white border-2 rounded-lg text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('green')}>VERT</button>
-                <button className="bg-red-600 border-white border-2 rounded-lg text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('red')}>ROUGE</button>
+                <button className="bg-indigo-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('blue')}>BLEU</button>
+                <button className="bg-green-500 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('green')}>VERT</button>
+                <button className="bg-red-600 border-white border-2 rounded-full text-white shadow-sm p-4 transition-all mt-5" onClick={() => this.changeColor('red')}>ROUGE</button>
               </div>
             </div>
           }
@@ -114,7 +130,7 @@ class App extends React.Component {
             <button className="bg-gray-900 border-white border-2 w-min mx-auto rounded-full text-white shadow-sm p-8 transition-all text-xl focus:outline-none hover:shadow-xl" onClick={() => this.requestBLEConnection()}>
               {
                 this.state.connecting &&
-                <Loader type="Rings" color="#00BFFF" height={80} width={80} />
+                <Loader type="Rings" color="#ffeb0a" height={80} width={80} />
               }
               {
                 !this.state.connecting &&
