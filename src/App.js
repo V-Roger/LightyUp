@@ -101,7 +101,7 @@ class App extends React.Component {
         <main className="z-0 h-3/4 w-90 bg-lighty-yellow flex flex-col content-between justify-center p-4">
           {
             this.state.error && 
-            <h2 className="fixed z-50 top-0 ring-4 ring-white right-4 left-4 mt-4 p-4 text-white shadow-sm bg-lighty-blue rounded">
+            <h2 className="fixed z-50 top-1/4 ring-4 ring-white right-4 left-4 mt-8 p-4 text-white shadow-sm bg-lighty-blue rounded">
               { this.state.error.toString() }
             </h2>
           }
