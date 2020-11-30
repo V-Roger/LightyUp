@@ -7,7 +7,7 @@
 A react-powered PWA which allows BLE LED-strips control from Google Chrome
 
 ## 🚴 The story
-![Lighty.bike logo](public/android-chrome-512x512.png)
+![Lighty.bike logo](public/apple-touch-icon.png)
 
 [Lighty](https://lighty.bike/) is a bicycle-fanatic's company aimed at promoting safety and fun amongst two-wheeled enthusiasts.
 
